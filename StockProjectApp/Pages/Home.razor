@@ -1,0 +1,83 @@
+﻿@page "/home"
+@using Microsoft.AspNetCore.SignalR
+@inject HttpClient http
+@inject CustomerState ClientState
+@inject NavigationManager NavigationManager
+
+
+<h1>
+
+    <p style="text-align: left">
+        Welcome, @ClientState.ClientCustomer.LoginName
+        <span style="float:right">
+             Account Balance: $@ClientState.ClientCustomer.Current_Cash
+        </span>
+    </p>
+</h1>
+<h2> Your Current Portfolios </h2>
+<table class="table">
+    <thead>
+    <tr>
+        <th>Portfolio ID#</th>
+        <th>Name</th>
+        <th></th>
+    </tr>
+    </thead>
+    <tbody>
+    @foreach (var port in portfoliosList)
+    {
+        <tr>
+            <td>@port.PK_Portfolio_ID</td>
+            <td>@port.Portfolio_Name</td>
+            <td>
+                <a style="text-underline-position:under; cursor:pointer; color:blue; font-weight:bold" @onclick="()=>SelectPortfolio(port)">Select</a>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>
+<div>
+    <NavLink href="portfolio/create" class="btn btn-link">Create New Portfolio</NavLink>
+</div>
+<div>
+    <br/>
+    <br/>
+    <p style="color: red">
+        <h4> @errorMessage </h4>
+    </p>
+</div>
+
+@code
+{
+    private List<Portfolio> portfoliosList = new List<Portfolio>();
+
+    private string errorMessage;
+
+    private async Task<List<Portfolio>> GetPortfolios(int id)
+    {
+        errorMessage = "";
+        //deleted id cast
+        var response = await http.GetAsync("https://localhost:7099/Portfolio/User/"+ id);
+        if (!response.IsSuccessStatusCode)
+        {
+            errorMessage = $"No Portfolios Currently";
+            return null;
+        }
+        portfoliosList = await response.Content.ReadFromJsonAsync<List<Portfolio>>();
+        ClientState.CustomerPortfoliosList = portfoliosList;
+        portfoliosList.Sort((x,y) => x.PK_Portfolio_ID.CompareTo(y.PK_Portfolio_ID));
+        return portfoliosList;
+    }
+
+    private async Task SelectPortfolio(Portfolio selectedPortfolio)
+    {
+        ClientState.SelectedPortfolio = selectedPortfolio;
+        NavigationManager.NavigateTo("/portfolio");
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        await GetPortfolios(ClientState.ClientCustomer.PK_Customer_ID);
+
+    }
+
+}

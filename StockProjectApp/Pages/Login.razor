@@ -1,0 +1,60 @@
+﻿@page "/"
+@page "/account/login"
+@layout NoMenuLayout
+@using Microsoft.AspNetCore.Mvc
+@using Microsoft.AspNetCore.Mvc.ModelBinding.Validation
+@inject HttpClient http;
+@inject NavigationManager NavigationManager;
+@inject CustomerState ClientState;
+
+<div style="text-align:center">
+    <img src="images/enron-logo-png-transparent.png" style="width: 500px; height: 500px" alt="centered image"/>
+</div>
+<div class="card" style="width: 800px; margin-left:25vw">
+    <h4 class="card-header">Login</h4>
+    <div class="card-body">
+        <EditForm Model="@user">
+            <div class="form-group">
+                <label>Username</label>
+                <InputText @bind-Value="user.LoginName" class="form-control"/>
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <InputText @bind-Value="user.Password" type="password" class="form-control" />
+            </div>
+            <button class="btn btn-primary" @onclick="() => TryValidate(user)">
+                Login
+            </button>
+            <NavLink href="account/register" class="btn btn-link">Don't have an account? Click Here</NavLink>
+        </EditForm>
+    </div>
+</div>
+<div>
+    <br/>
+    <br/>
+    <p style="color: red">
+        <h4> @alertMessage </h4>
+    </p>
+</div>
+
+@code
+{
+    private Customer user = new Customer();
+    public Customer validUser = new Customer();
+    private string alertMessage;
+
+    public async Task TryValidate(Customer inputUser)
+    {
+        alertMessage = "";
+        var response =  await http.PostAsJsonAsync<Customer>("https://localhost:7099/Customer/validate", inputUser);
+        if (!response.IsSuccessStatusCode)
+        {
+            alertMessage = "Username/Password authentication failed!";
+            return;
+        }
+        validUser = await response.Content.ReadFromJsonAsync<Customer>();
+        ClientState.ClientCustomer = validUser;
+        NavigationManager.NavigateTo(("/Home"));
+    }
+
+}

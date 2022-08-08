@@ -1,0 +1,130 @@
+﻿@page "/buystock"
+@using Microsoft.AspNetCore.SignalR
+@inject HttpClient http
+@inject CustomerState ClientState
+@inject NavigationManager NavigationManager
+
+<PageTitle>Purchase Stock</PageTitle>
+
+<h1>Purchase Stock</h1>
+<div>
+    <input placeholder="Enter Symbol" @onchange="OnChange" />
+    <button class="btn btn-outline-primary" type="submit" @onclick="() => GetStock(StockSymbol)">Search Stocks</button>
+
+</div>
+
+<table class="table">
+    <thead>
+    <tr>
+        <th>Symbol</th>
+        <th>Date</th>
+        <th>Open</th>
+        <th>High</th>
+        <th>Low</th>
+        <th>Current Price</th>
+        <th>Volume</th>
+        <th>FK_Exchange</th>
+        <th>SharesToPurchase</th>
+        <th>Actions</th>
+
+    </tr>
+    </thead>
+    <tbody>
+    @if (stock.Close > 0)
+    {
+        <tr>
+            <td>@stock.FK_Symbol</td>
+            <td>@stock.Date.ToString("MM/dd/yyyy")</td>
+            <td>@stock.Open</td>
+            <td>@stock.High</td>
+            <td>@stock.Low</td>
+            <td>@stock.Close</td>
+            <td>@stock.Volume</td>
+            <td>@stock.FK_Exchange</td>
+            <td><input type="number" placeholder="Number of Shares" @bind="stocksToPurchase" @bind:event="oninput"/></td>
+            <td style="text-underline-position:under; cursor:pointer; color:blue; font-weight:bold" @onclick="()=>PurchaseStock(stock)">Purchase</td>
+        </tr>
+    }
+    </tbody>
+</table>
+
+<div>
+    <br/>
+    <br/>
+    <p style="color: red">
+        <h4> @errorMessage </h4>
+    </p>
+</div>
+
+@code
+{
+    private StockInfo stock= new StockInfo();
+
+    static string StockSymbol { get; set; }
+
+    private int stocksToPurchase;
+
+    private string errorMessage;
+
+    private void OnChange(ChangeEventArgs args)
+    {
+        StockSymbol = (string)args.Value;
+    }
+
+    
+
+    private async Task<StockInfo> GetStock(string stockSymbol)
+    {
+        errorMessage = "";
+        var response = await http.GetAsync("https://localhost:7099/Stock/"+ stockSymbol + "/" + ClientState.SetDate.ToString("MM'-'dd'-'yyyy"));
+        if (!response.IsSuccessStatusCode)
+        {
+            errorMessage = $"Could not find any data on {StockSymbol}";
+            return null;
+        }
+        stock = await response.Content.ReadFromJsonAsync<StockInfo>();
+        return stock;
+    }
+
+    private async Task PurchaseStock(StockInfo selectStock)
+    {
+        errorMessage = "";
+        ClientState.SelectedStock = selectStock;
+        decimal cost = stocksToPurchase * selectStock.Close;
+        if (stocksToPurchase == 0)
+        {
+            errorMessage = "Please Enter A Number of Shares";
+            return;
+        }
+        if (cost > ClientState.ClientCustomer.Current_Cash)
+        {
+            errorMessage = "Insufficient Funds";
+            return;
+        }
+        StockHolding purchasedStock = new StockHolding()
+        {
+            FK_Portfolio_ID = ClientState.SelectedPortfolio.PK_Portfolio_ID,
+            Symbol = selectStock.FK_Symbol,
+            Purchase_Date = ClientState.SetDate,
+            Purchase_Price = selectStock.Close,
+            Current_Price = selectStock.Close,
+            Shares = stocksToPurchase
+
+        };
+        var response =  await http.PostAsJsonAsync<StockHolding>("https://localhost:7099/StockPortfolio/purchase", purchasedStock);
+        if (!response.IsSuccessStatusCode)
+        {
+            errorMessage = "Something went wrong";
+            return;
+        }
+        await CostValue(cost);
+        NavigationManager.NavigateTo(("/portfolio"));
+    }
+
+    public async Task CostValue(decimal cost)
+    {
+        ClientState.ClientCustomer.Current_Cash -= cost;
+        await http.PutAsJsonAsync<Customer>("https://localhost:7099/Customer/deposit", ClientState.ClientCustomer);
+    }
+    
+}

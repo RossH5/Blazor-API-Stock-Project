@@ -1,0 +1,44 @@
+﻿@page "/account/register"
+@layout NoMenuLayout
+@using Microsoft.AspNetCore.Mvc
+@using Microsoft.AspNetCore.Mvc.ModelBinding.Validation
+@inject HttpClient http
+@inject NavigationManager NavigationManager
+@inject CustomerState ClientState;
+
+
+<div class="card">
+    <h4 class="card-header">Register</h4>
+    <div class="card-body">
+        <EditForm Model="@user">
+            <div class="form-group">
+                <label>Username</label>
+                <InputText @bind-Value="user.LoginName" class="form-control"/>
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <InputText @bind-Value="user.Password" type="password" class="form-control" />
+            </div>
+            <div class="form-group">
+                <label>Cash Amount</label>
+                <InputNumber class="form-control" @bind-Value=user.Current_Cash ParsingErrorMessage="Must be a decimal value" />
+            </div>
+            <button class="btn btn-primary" @onclick="() => TryCreate(user)">
+                Create
+            </button>
+            <NavLink href="account/login" class="btn btn-link">Go Back</NavLink>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    Customer user = new Customer();
+
+    public async Task TryCreate(Customer inputCustomer)
+    {
+        await http.PostAsJsonAsync<Customer>("https://localhost:7099/Customer/register", inputCustomer);
+        ClientState.ClientCustomer = inputCustomer;
+        NavigationManager.NavigateTo(("/Home"));
+    }
+
+}

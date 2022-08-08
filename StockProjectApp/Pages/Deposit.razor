@@ -1,0 +1,38 @@
+﻿@page "/deposit"
+@layout NoMenuLayout
+@using Microsoft.AspNetCore.Mvc
+@using Microsoft.AspNetCore.Mvc.ModelBinding.Validation
+@inject HttpClient http
+@inject NavigationManager NavigationManager
+@inject CustomerState ClientState;
+
+
+<div class="card">
+    <h4 class="card-header">Deposit</h4>
+    <div class="card-body">
+        <EditForm Model="@depositAmount">
+            <div class="form-group">
+                <label>Cash Amount</label>
+                <InputNumber class="form-control" @bind-Value=depositAmount ParsingErrorMessage="Must be a decimal value" />
+            </div>
+            <button class="btn btn-primary" @onclick="() => TryDeposit(ClientState.ClientCustomer)">
+                Create
+            </button>
+            <NavLink href="home" class="btn btn-link">Go Back</NavLink>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+
+    private decimal depositAmount;
+
+    public async Task TryDeposit(Customer inputCustomer)
+    {
+        inputCustomer.Current_Cash += depositAmount;
+        ClientState.ClientCustomer = inputCustomer;
+        await http.PutAsJsonAsync<Customer>("https://localhost:7099/Customer/deposit", inputCustomer);
+        NavigationManager.NavigateTo(("/Home"));
+    }
+
+}

@@ -1,0 +1,36 @@
+﻿@inherits LayoutComponentBase
+@inject CustomerState ClientState
+@inject NavigationManager NavigationManager
+
+<PageTitle>StockProjectApp</PageTitle>
+
+<div class="page">
+    <div class="sidebar">
+        <NavMenu />
+    </div>
+
+    <main>
+        <div class="top-row px-4">
+            <a> @ClientState.SetDate.ToString("MM/dd/yyyy")</a>
+            <a href="deposit">Deposit</a>
+            <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" target="_blank">Bezos Mode</a>
+            <a href=""@onclick="() => ClearUser()">Logout</a>
+        </div>
+
+        <article class="content px-4">
+            @Body
+        </article>
+    </main>
+</div>
+
+@code
+{
+    public async Task ClearUser()
+    {
+        ClientState.ClientCustomer = null;
+        ClientState.SelectedPortfolio = null;
+        ClientState.CurrentPortfolio = null;
+        ClientState.CustomerPortfoliosList = null;
+        NavigationManager.NavigateTo("");
+    }
+}

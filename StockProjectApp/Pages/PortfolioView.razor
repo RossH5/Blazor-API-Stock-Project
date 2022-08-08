@@ -1,0 +1,115 @@
+﻿@page "/portfolio"
+@using Microsoft.AspNetCore.SignalR
+@using Newtonsoft.Json
+@using System.Text
+@inject HttpClient http
+@inject CustomerState ClientState
+@inject NavigationManager NavigationManager
+
+<h1>
+    <p style="text-align: left">
+        @ClientState.SelectedPortfolio.Portfolio_Name 
+        <span style="float:right">
+            Portfolio Total Value: $@PortfolioValue
+        </span>
+    </p>
+</h1>
+<h2> Your Current Holdings </h2>
+<table class="table">
+    <thead>
+    <tr>
+        <th>Symbol</th>
+        <th>Purchase Date</th>
+        <th>Purchase Price</th>
+        <th>Current Price</th>
+        <th>Shares</th>
+        <th>Actions</th>
+    </tr>
+    </thead>
+    <tbody>
+    @foreach (var stock in holdingList)
+    {
+        <tr>
+            <td>@stock.Symbol</td>
+            <td>@stock.Purchase_Date.ToString("MM/dd/yyyy")</td>
+            <td>@stock.Purchase_Price</td>
+            <td>@stock.Current_Price</td>
+            <td>@stock.Shares</td>
+            <td>
+                <a style="text-underline-position:under; cursor:pointer; color:red; font-weight:bold" @onclick="()=>SellStock(stock)">Sell</a>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>
+<div>
+    <NavLink href="/buystock" class="btn btn-link">Purchase Stock</NavLink>
+</div>
+
+<div>
+    <br/>
+    <br/>
+    <p style="color: red">
+        <h4> @errorMessage </h4>
+    </p>
+</div>
+
+@code
+{
+    private decimal PortfolioValue;
+    private List<StockHolding> holdingList = new List<StockHolding>();
+
+    private string errorMessage;
+
+    private async Task<List<StockHolding>> GetStockHoldings()
+    {
+        errorMessage = "";
+        var response = await http.GetAsync("https://localhost:7099/StockPortfolio/" + ClientState.SelectedPortfolio.PK_Portfolio_ID);
+        if (!response.IsSuccessStatusCode)
+        {
+            errorMessage = $"No Holdings Currently";
+            return null;
+        }
+        holdingList = await response.Content.ReadFromJsonAsync<List<StockHolding>>();
+        foreach (StockHolding stock in holdingList)
+        {
+            PortfolioValue += (stock.Current_Price * stock.Shares);
+        }
+        ClientState.PortHoldings = holdingList;
+        holdingList.Sort((x, y) => y.Symbol.CompareTo(x.Symbol));
+        return holdingList;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetStockHoldings();
+
+    }
+
+    private async Task SellStock(StockHolding stock)
+    {
+        var request = new HttpRequestMessage
+        {
+            Method = HttpMethod.Delete,
+            RequestUri = new Uri("https://localhost:7099/StockPortfolio/sell"),
+            Content = new StringContent(JsonConvert.SerializeObject(stock), Encoding.UTF8, "application/json")
+        };
+        var response = await http.SendAsync(request);
+        if (!response.IsSuccessStatusCode)
+        {
+            errorMessage = "Something went wrong";
+            return;
+        }
+        decimal totalSale = stock.Current_Price * stock.Shares;
+        PortfolioValue -= totalSale;
+        holdingList.Remove(stock);
+        ClientState.PortHoldings = holdingList;
+        await SaleValue(totalSale);
+        NavigationManager.NavigateTo("/portfolio");
+    }
+    public async Task SaleValue(decimal cost)
+    {
+        ClientState.ClientCustomer.Current_Cash += cost;
+        await http.PutAsJsonAsync<Customer>("https://localhost:7099/Customer/deposit", ClientState.ClientCustomer);
+    }
+}

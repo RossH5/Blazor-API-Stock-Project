@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.2.32630.192
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StockProjectApp", "StockProjectApp\StockProjectApp.csproj", "{A75EA4E7-47AA-45E8-8AB1-03F0470B6B69}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StockPortAPI", "..\StockPortAPI\StockPortAPI\StockPortAPI.csproj", "{E2A84132-9762-495B-A1C2-EAE9047E6BD0}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A75EA4E7-47AA-45E8-8AB1-03F0470B6B69}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A75EA4E7-47AA-45E8-8AB1-03F0470B6B69}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A75EA4E7-47AA-45E8-8AB1-03F0470B6B69}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A75EA4E7-47AA-45E8-8AB1-03F0470B6B69}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E2A84132-9762-495B-A1C2-EAE9047E6BD0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E2A84132-9762-495B-A1C2-EAE9047E6BD0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E2A84132-9762-495B-A1C2-EAE9047E6BD0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E2A84132-9762-495B-A1C2-EAE9047E6BD0}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {ACB9F57A-F8B0-4540-9E8D-3B1E67852816}
+	EndGlobalSection
+EndGlobal

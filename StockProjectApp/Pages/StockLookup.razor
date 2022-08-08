@@ -1,0 +1,85 @@
+﻿@page "/stocklookup"
+@using Microsoft.AspNetCore.SignalR
+@inject HttpClient http;
+@inject CustomerState ClientState;
+
+<PageTitle>Search Stock History</PageTitle>
+
+<h1>Stock Lookup</h1>
+<div>
+    <input placeholder="Enter Symbol" @onchange="OnChange" />
+    <button class="btn btn-outline-primary" type="submit" @onclick="() => GetStocks(StockSymbol)">Search Stocks</button>
+
+</div>
+
+<table class="table">
+    <thead>
+    <tr>
+        <th>Symbol</th>
+        <th>Date</th>
+        <th>Open</th>
+        <th>High</th>
+        <th>Low</th>
+        <th>Close</th>
+        <th>Volume</th>
+        <th>FK_Exchange</th>
+
+    </tr>
+    </thead>
+    <tbody>
+    @foreach (var stock in @Stocks)
+    {
+        <tr>
+            <td>@stock.FK_Symbol</td>
+            <td>@stock.Date.ToString("MM/dd/yyyy")</td>
+            <td>@stock.Open</td>
+            <td>@stock.High</td>
+            <td>@stock.Low</td>
+            <td>@stock.Close</td>
+            <td>@stock.Volume</td>
+            <td>@stock.FK_Exchange</td>
+        </tr>
+    }
+    </tbody>
+</table>
+
+<div>
+    <br/>
+    <br/>
+    <p style="color: red">
+        <h4> @errorMessage </h4>
+    </p>
+</div>
+
+@code
+{
+    private List<StockInfo> Stocks = new List<StockInfo>();
+
+    static string StockSymbol { get; set; }
+
+    private string errorMessage;
+
+    private void OnChange(ChangeEventArgs args)
+    {
+        StockSymbol = (string)args.Value;
+    }
+
+    
+
+    private async Task<List<StockInfo>> GetStocks(string stockSymbol)
+    {
+        errorMessage = "";
+        var response = await http.GetAsync("https://localhost:7099/Stock/"+ stockSymbol);
+        if (!response.IsSuccessStatusCode)
+        {
+            Stocks.Clear();
+            errorMessage = $"Could not find any data on {StockSymbol}";
+            return null;
+        }
+        Stocks = await response.Content.ReadFromJsonAsync<List<StockInfo>>();
+        Stocks.Sort((x,y) => y.Date.CompareTo(x.Date));
+        return Stocks;
+    }
+
+    
+}

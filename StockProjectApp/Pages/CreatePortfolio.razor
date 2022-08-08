@@ -1,0 +1,53 @@
+﻿@page "/portfolio/create"
+@using Microsoft.AspNetCore.Mvc
+@using Microsoft.AspNetCore.Mvc.ModelBinding.Validation
+@inject HttpClient http
+@inject NavigationManager NavigationManager
+@inject CustomerState ClientState
+
+
+<div class="card">
+    <h4 class="card-header">Create Portfolio</h4>
+    <div class="card-body">
+        <EditForm Model="@createdPortfolio">
+            <div class="form-group">
+                <label>Portfolio Name</label>
+                <InputText @bind-Value="createdPortfolio.Portfolio_Name" class="form-control"/>
+            </div>
+            <button class="btn btn-primary" @onclick="() => TryCreate(createdPortfolio)">
+                Create
+            </button>
+            <NavLink href="/home" class="btn btn-link">Go Back</NavLink>
+        </EditForm>
+    </div>
+</div>
+
+<div>
+    <br/>
+    <br/>
+    <p style="color: red">
+        <h4> @errorMessage </h4>
+    </p>
+</div>
+
+@code 
+{
+
+    private Portfolio createdPortfolio = new Portfolio();
+    private string errorMessage = "";
+
+    public async Task TryCreate(Portfolio inputPortfolio)
+    {
+        errorMessage = "";
+        inputPortfolio.FK_Customer_ID = ClientState.ClientCustomer.PK_Customer_ID;
+        if (createdPortfolio.Portfolio_Name == null)
+        {
+            errorMessage = "Please Enter a Portfolio Name";
+            return;
+        }
+        await http.PostAsJsonAsync<Portfolio>("https://localhost:7099/Portfolio/create", inputPortfolio);
+        ClientState.CurrentPortfolio = inputPortfolio;
+        NavigationManager.NavigateTo(("/Home"));
+    }
+
+}
